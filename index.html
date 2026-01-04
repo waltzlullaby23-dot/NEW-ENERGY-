@@ -3,154 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 電力交易儀表板</title>
+    <title>能源調度系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background: #05070a; color: #e2e8f0; }
-        .dashboard-grid { background-image: radial-gradient(circle, #1e293b 1px, transparent 1px); background-size: 30px 30px; }
-        .neon-border { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.3); }
-        .value-font { font-family: 'Courier New', Courier, monospace; }
-        
-        /* 儀表板動畫 */
-        .gauge-path { transition: stroke-dasharray 0.8s ease-in-out, stroke 0.5s; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #020617; color: #f1f5f9; }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .neon-text-blue { text-shadow: 0 0 8px rgba(96, 165, 250, 0.8); }
+        .progress-bar { transition: width 1s ease-in-out; }
     </style>
 </head>
-<body class="min-h-screen dashboard-grid p-4 flex flex-col items-center">
+<body class="p-4 sm:p-6 flex flex-col items-center">
 
     <div class="max-w-md w-full space-y-6">
-        <header class="flex justify-between items-end py-2">
+        <header class="flex justify-between items-start">
             <div>
-                <h1 class="text-2xl font-black tracking-wider text-indigo-400">電力調度控制中心</h1>
-                <div id="status-line" class="text-xs text-emerald-500 font-bold animate-pulse mt-1">● 系統運作正常：連線中</div>
+                <h1 class="text-xl font-black text-blue-400 tracking-tighter uppercase">Enterprise Energy VPP</h1>
+                <p id="date-display" class="text-[10px] text-slate-500 font-mono italic">LOADING_DATE...</p>
             </div>
             <div class="text-right">
-                <p class="text-xs text-slate-500 value-font" id="current-time">00:00:00</p>
+                <span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">連線正常</span>
             </div>
         </header>
 
-        <section class="bg-slate-900/90 backdrop-blur-xl rounded-[3rem] p-8 neon-border relative flex flex-col items-center">
+        <section class="glass rounded-[2rem] p-6 shadow-2xl relative overflow-hidden">
+            <div class="flex justify-between mb-4">
+                <p class="text-xs font-bold text-slate-400">當前全台備轉率</p>
+                <p id="light-status" class="text-xs font-bold text-emerald-400">供電充裕</p>
+            </div>
             
-            <h2 class="text-sm font-bold text-slate-400 mb-6 tracking-widest uppercase">全台備轉容量監測</h2>
-
-            <div class="relative h-64 w-64">
-                <svg viewBox="0 0 36 36" class="h-full w-full -rotate-90">
-                    <path stroke="#1e293b" stroke-width="3" fill="none" 
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <path id="gauge-circle" class="gauge-path" stroke="#6366f1" stroke-width="3" stroke-linecap="round" fill="none" 
-                          stroke-dasharray="0, 100" 
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <span id="real-reserve" class="text-5xl font-black italic tracking-tighter">--%</span>
-                    <span id="light-status" class="text-xs font-bold mt-2 px-3 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">資料讀取中</span>
-                </div>
+            <div class="text-center py-4">
+                <span id="real-reserve" class="text-6xl font-black italic text-white neon-text-blue">--%</span>
             </div>
 
-            <div class="w-full grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-slate-800">
-                <div class="text-center">
-                    <p class="text-[10px] text-slate-500 font-bold mb-1">即時電網頻率</p>
-                    <p class="text-xl font-bold text-indigo-400 value-font"><span id="live-hz">60.00</span> <small class="text-xs">Hz</small></p>
+            <div class="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-800">
+                <div>
+                    <p class="text-[10px] text-slate-500 uppercase mb-1 tracking-widest">今日預估獲利</p>
+                    <p id="calc-profit" class="text-xl font-bold text-orange-400 font-mono">$ 0.00</p>
                 </div>
-                <div class="text-center border-l border-slate-800">
-                    <p class="text-[10px] text-slate-500 font-bold mb-1">今日預估獲利</p>
-                    <p id="calc-profit" class="text-xl font-bold text-orange-400 value-font">$ 0.00</p>
+                <div>
+                    <p class="text-[10px] text-slate-500 uppercase mb-1 tracking-widest">ESG 減碳量</p>
+                    <p id="esg-co2" class="text-xl font-bold text-emerald-400 font-mono">0.00 <small class="text-[10px]">kg</small></p>
                 </div>
             </div>
         </section>
 
         
 
-        <main class="bg-slate-900/60 backdrop-blur-md rounded-3xl p-6 border border-slate-800 space-y-5">
-            <h3 class="text-xs font-bold text-slate-400 tracking-widest px-1">大用戶參數設定 (2026 夜尖峰)</h3>
-            
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-black/40 p-4 rounded-2xl border border-slate-800">
-                    <label class="text-[10px] font-bold text-slate-500 block mb-1">契約容量 (kW)</label>
-                    <input type="number" id="input-contract" value="1000" class="w-full bg-transparent text-xl font-bold outline-none text-white value-font">
+        <div class="glass rounded-2xl p-4">
+            <div class="flex justify-between text-[10px] font-bold mb-2">
+                <span class="text-slate-400 uppercase tracking-widest">本月節電目標達成率</span>
+                <span id="progress-text" class="text-blue-400 italic">0%</span>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full">
+                <div id="target-progress" class="progress-bar bg-blue-500 h-full rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <section class="glass rounded-3xl p-5">
+            <h3 class="text-xs font-bold text-slate-400 mb-4 tracking-widest uppercase italic">預計執行方案 (夜尖峰時段)</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-white/5">
+                    <span class="text-sm font-medium">B 棟冰水主機降頻</span>
+                    <span class="text-xs font-bold text-blue-400">-50 kW</span>
                 </div>
-                <div class="bg-black/40 p-4 rounded-2xl border border-slate-800">
-                    <label class="text-[10px] font-bold text-slate-500 block mb-1">抑低容量 (kW)</label>
-                    <input type="number" id="input-reduction" value="200" class="w-full bg-transparent text-xl font-bold outline-none text-white value-font">
+                <div class="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-white/5">
+                    <span class="text-sm font-medium">儲能系統放電</span>
+                    <span class="text-xs font-bold text-blue-400">-100 kW</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-white/5">
+                    <span class="text-sm font-medium">產線 C 暫停 (3小時)</span>
+                    <span class="text-xs font-bold text-blue-400">-150 kW</span>
                 </div>
             </div>
-            
-            <button onclick="manualSync()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-indigo-900/40 tracking-widest">
-                立即同步台電數據
-            </button>
-        </main>
+        </section>
 
-        <footer class="text-center">
-            <p class="text-[10px] text-slate-600 tracking-widest uppercase font-bold">數據來源：台電開放資料 API</p>
-        </footer>
+        <section class="glass rounded-2xl p-4 grid grid-cols-2 gap-3">
+            <div class="flex flex-col">
+                <label class="text-[9px] text-slate-500 font-bold mb-1 ml-1 uppercase">契約容量</label>
+                <input type="number" id="input-contract" value="1000" class="bg-black/20 border border-white/5 rounded-lg px-3 py-2 text-sm font-bold outline-none text-blue-300">
+            </div>
+            <div class="flex flex-col">
+                <label class="text-[9px] text-slate-500 font-bold mb-1 ml-1 uppercase">目標抑低量</label>
+                <input type="number" id="input-reduction" value="300" class="bg-black/20 border border-white/5 rounded-lg px-3 py-2 text-sm font-bold outline-none text-blue-300">
+            </div>
+        </section>
+
+        <button onclick="updateSystem()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-900/20 transition-all active:scale-95 text-sm tracking-widest uppercase">
+            同步台電數據並優化決策
+        </button>
+
     </div>
 
     <script>
-        // 更新即時時鐘
-        function updateClock() {
+        // 初始化日期與時間
+        function updateDate() {
             const now = new Date();
-            document.getElementById('current-time').innerText = now.toTimeString().split(' ')[0];
+            document.getElementById('date-display').innerText = now.toLocaleString('zh-TW', { hour12: false });
         }
-        setInterval(updateClock, 1000);
+        setInterval(updateDate, 1000);
 
-        // API 抓取邏輯
         async function fetchTaipower() {
             const api_url = "https://corsproxy.io/?https://www.taipower.com.tw/d006/load_draw/data/load_supply_info.json";
-            
             try {
-                const response = await fetch(api_url);
-                const data = await response.json();
-                // 優先抓取台電 JSON 欄位
-                const reserve = parseFloat(data.reserve_rate || data.reserve_rate_perc || 15);
+                const res = await fetch(api_url);
+                const data = await res.json();
+                const reserve = parseFloat(data.reserve_rate || 15);
                 const status = data.m_status || "供電充裕";
-
-                updateUI(reserve, status);
-            } catch (error) {
-                // 失敗時進入模擬模式
-                const mock = (10 + (Math.random() * 4)).toFixed(2);
-                updateUI(mock, "數據傳輸中...");
+                
+                document.getElementById('real-reserve').innerText = reserve + "%";
+                document.getElementById('light-status').innerText = status;
+                
+                const light = document.getElementById('light-status');
+                if(reserve < 10) { light.className = "text-xs font-bold text-orange-400 animate-pulse"; }
+                else { light.className = "text-xs font-bold text-emerald-400"; }
+            } catch (e) {
+                const mock = (12 + Math.random()*2).toFixed(2);
+                document.getElementById('real-reserve').innerText = mock + "%";
             }
         }
 
-        function updateUI(reserve, status) {
-            document.getElementById('real-reserve').innerText = reserve + "%";
-            document.getElementById('light-status').innerText = status;
+        function calculateBusinessLogic() {
+            const reduction = parseFloat(document.getElementById('input-reduction').value) || 0;
+            const price = 8.5; // 2026 預期夜尖峰價格
+            const hours = 6;
             
-            // 圓環百分比計算 (假設備轉 20% 為全滿視覺)
-            const percentage = Math.min(100, (reserve / 20) * 100);
-            const gauge = document.getElementById('gauge-circle');
-            gauge.style.strokeDasharray = `${percentage}, 100`;
+            // 收益跳動模擬
+            const jitter = (Math.random() - 0.5) * 2;
+            const reward = (reduction + jitter) * hours * price * 1.05;
+            
+            // ESG 減碳計算 (台灣電力排碳係數假設為 0.495 kg/kWh)
+            const co2 = (reduction + jitter) * hours * 0.495;
+            
+            animateValue("calc-profit", reward, 800, "$ ");
+            animateValue("esg-co2", co2, 800, "", " kg");
 
-            // 變色邏輯
-            if(reserve < 6) {
-                gauge.setAttribute('stroke', '#ef4444'); // 紅色
-                document.getElementById('real-reserve').className = 'text-5xl font-black italic tracking-tighter text-red-500';
-            } else if(reserve < 10) {
-                gauge.setAttribute('stroke', '#f59e0b'); // 橘色
-                document.getElementById('real-reserve').className = 'text-5xl font-black italic tracking-tighter text-amber-500';
-            } else {
-                gauge.setAttribute('stroke', '#6366f1'); // 藍紫色
-                document.getElementById('real-reserve').className = 'text-5xl font-black italic tracking-tighter text-white';
-            }
+            // 更新目標達成率 (模擬)
+            const progress = Math.min(100, (reduction / 500) * 100).toFixed(1);
+            document.getElementById('target-progress').style.width = progress + "%";
+            document.getElementById('progress-text').innerText = progress + "%";
         }
 
-        // 獲利試算與跳動
-        function calculateProfit() {
-            const reductionBase = parseFloat(document.getElementById('input-reduction').value) || 0;
-            const price = 8.0, hours = 6, incentive = 1.05;
-            
-            // 模擬電網微幅波動讓數值「動起來」
-            const jitter = (Math.random() - 0.5) * 1.5;
-            const target = Math.max(0, (reductionBase + jitter) * hours * price * incentive);
-            
-            animateValue("calc-profit", target, 800);
-            
-            // 頻率模擬
-            const hz = (59.97 + Math.random() * 0.06).toFixed(2);
-            document.getElementById('live-hz').innerText = hz;
-        }
-
-        function animateValue(id, end, duration) {
+        function animateValue(id, end, duration, prefix = "", suffix = "") {
             const obj = document.getElementById(id);
             const start = parseFloat(obj.innerText.replace(/[^0-9.]/g, '')) || 0;
             let startTimestamp = null;
@@ -158,23 +152,21 @@
                 if (!startTimestamp) startTimestamp = timestamp;
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
                 const val = (progress * (end - start) + start).toFixed(2);
-                obj.innerText = "$ " + parseFloat(val).toLocaleString(undefined, {minimumFractionDigits: 2});
+                obj.innerText = prefix + parseFloat(val).toLocaleString(undefined, {minimumFractionDigits: 2}) + suffix;
                 if (progress < 1) window.requestAnimationFrame(step);
             };
             window.requestAnimationFrame(step);
         }
 
-        function manualSync() {
+        function updateSystem() {
             fetchTaipower();
-            calculateProfit();
+            calculateBusinessLogic();
         }
 
-        // 啟動排程
         window.onload = () => {
-            fetchTaipower();
-            updateClock();
-            setInterval(calculateProfit, 3000); // 每 3 秒更新獲利跳動
-            setInterval(fetchTaipower, 30000);  // 每 30 秒抓一次台電 API
+            updateSystem();
+            setInterval(calculateBusinessLogic, 4000);
+            setInterval(fetchTaipower, 30000);
         };
     </script>
 </body>
